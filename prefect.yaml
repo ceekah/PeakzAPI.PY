@@ -1,0 +1,15 @@
+name: peakzapi-py
+prefect-version: 3.0.0
+
+deployments:
+  - name: dagelijkse-boeking
+    entrypoint: peakz_api.py:peakz_boeking
+    schedules:
+      - cron: "0 0 * * *"
+        timezone: "Europe/Amsterdam"
+    parameters:
+      boek: true
+      tier: 5
+      speeltijd: "90"
+      tijdstip: "19:00"
+      baantype: "alle"
