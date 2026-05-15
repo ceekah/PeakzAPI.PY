@@ -466,12 +466,11 @@ def send_error_mail(onderwerp: str, bericht: str, mail: bool, logger: logging.Lo
 
 def wait_for_midnight(logger: logging.Logger) -> None:
     now = datetime.now()
-    if now.hour == 23 and now.minute >= 50:
-        midnight = datetime.combine(now.date() + timedelta(days=1), datetime.min.time())
-        wait_secs = math.ceil((midnight - now).total_seconds())
-        print(f"Gestart om {now.strftime('%H:%M:%S')} — wacht tot middernacht ({wait_secs} seconden)...")
-        time.sleep(wait_secs)
-        print("Middernacht bereikt, zoeken begint nu.")
+    midnight = datetime.combine(now.date() + timedelta(days=1), datetime.min.time())
+    wait_secs = math.ceil((midnight - now).total_seconds())
+    print(f"Gestart om {now.strftime('%H:%M:%S')} — wacht tot middernacht ({wait_secs} seconden)...")
+    time.sleep(wait_secs)
+    print("Middernacht bereikt, zoeken begint nu.")
 
 # ---------------------------------------------------------------------------
 # Helper: book + pay flow (used twice: main path and fallback)
@@ -741,7 +740,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--mail", action="store_true")
     p.add_argument("--tijdstipAlternatief", nargs="*", default=[])
     p.add_argument("--tier", type=int, default=5, choices=range(1, 6), metavar="TIER")
-    p.add_argument("--wachtMiddernacht", action="store_true")
+    p.add_argument(
+        "--wachtMiddernacht", "--waitUntilMidnight",
+        dest="wachtMiddernacht",
+        action="store_true",
+        help="Wacht tot middernacht (00:00:00) voordat het zoeken/boeken start.",
+    )
     return p.parse_args()
 
 
