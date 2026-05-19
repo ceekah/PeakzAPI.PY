@@ -21,6 +21,7 @@ from datetime import date, datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import requests
 from cryptography.fernet import Fernet, InvalidToken
@@ -70,7 +71,8 @@ EMAIL_RECIPIENTS    = ["j.welleweerd@gmail.com", "jos@well-it.nl"]
 SMTP_SERVER         = "smtp.gmail.com"
 SMTP_PORT           = 587
 
-SCRIPT_DIR = Path(__file__).resolve().parent
+SCRIPT_DIR   = Path(__file__).resolve().parent
+AMSTERDAM_TZ = ZoneInfo("Europe/Amsterdam")
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -162,7 +164,7 @@ def get_doel_datum(dag_naam: str, max_days_ahead: int, logger: logging.Logger) -
     if target_wd is None:
         logger.error(f"Onbekende dag: {dag_naam}")
         return None
-    candidate = date.today() + timedelta(days=max_days_ahead)
+    candidate = datetime.now(AMSTERDAM_TZ).date() + timedelta(days=max_days_ahead)
     while candidate.weekday() != target_wd:
         candidate -= timedelta(days=1)
     logger.debug(
@@ -465,8 +467,8 @@ def send_error_mail(onderwerp: str, bericht: str, mail: bool, logger: logging.Lo
 # ---------------------------------------------------------------------------
 
 def wait_for_midnight(logger: logging.Logger) -> None:
-    now = datetime.now()
-    midnight = datetime.combine(now.date() + timedelta(days=1), datetime.min.time())
+    now = datetime.now(AMSTERDAM_TZ)
+    midnight = datetime.combine(now.date() + timedelta(days=1), datetime.min.time(), tzinfo=AMSTERDAM_TZ)
     wait_secs = math.ceil((midnight - now).total_seconds())
     print(f"Gestart om {now.strftime('%H:%M:%S')} — wacht tot middernacht ({wait_secs} seconden)...")
     time.sleep(wait_secs)
@@ -567,7 +569,7 @@ def peakz_boeking(
             print(f"Zoekdatum: {zoek_datum.strftime('%d-%m-%Y')} ({dag} binnen {max_days_ahead} dagen)")
             logger.debug(f"zoekDatum ISO: {zoek_datum.isoformat()}")
 
-            days_until = (zoek_datum - date.today()).days
+            days_until = (zoek_datum - datetime.now(AMSTERDAM_TZ).date()).days
             if boek and not dryrun and days_until < MIN_DAYS_AHEAD:
                 print(
                     f"[GEBLOKKEERD] Doeldatum {zoek_datum.strftime('%d-%m-%Y')} is slechts "
